@@ -82,6 +82,7 @@ namespace MusicFixer
 
             Console.WriteLine($"Finished patching {cellsPatched} cellsPatched");
             Console.WriteLine($"Finished patching {worldspacesPatched} worldspaces");
+            Console.WriteLine();
         }
     }
 }
