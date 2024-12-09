@@ -41,21 +41,47 @@ namespace MusicFixer
                 System.Console.WriteLine($"  {modKey}");
             }
 
+            var loadOrderLinkCache = state.LoadOrder.ToImmutableLinkCache();
             var targetModsLinkCache = targetMods.ToImmutableLinkCache();
 
-            uint interiorCellCount = 0;
-            foreach (var cell in state.LoadOrder.PriorityOrder.Cell().WinningOverrides())
+            uint cellsPatched = 0;
+            // Loop through winning cell records (with context) in load order
+            foreach (var winningCellContext in state.LoadOrder.PriorityOrder.Cell().WinningContextOverrides(loadOrderLinkCache))
             {
-                // See if the cell is in the target mods, and retrieve the winning record from them if it is
-                if (targetModsLinkCache.TryResolveContext<ICell, ICellGetter>(cell.FormKey, out var cellContext)) {
-                    interiorCellCount++;
+                // See if the cell is in the target mods(s). If it is, retrieve the version of the cell record from the target mod.
+                if (targetModsLinkCache.TryResolve<ICellGetter>(winningCellContext.Record.FormKey, out var targetCellRecord)) {
+                    // Check if the record has been modified by the target mod(s)
+                    if (!targetCellRecord.Music.Equals(winningCellContext.Record.Music))
+                    {
+                        // Add the winning record to the patch
+                        var patchRecord = winningCellContext.GetOrAddAsOverride(state.PatchMod);
+                        patchRecord.Music.FormKey = targetCellRecord.Music.FormKey;
 
-                    var modifiedCell = state.PatchMod.Cells.GetOrAddAsOverride(cell);
-                    Console.WriteLine(cellContext.Record.Music);
+                        cellsPatched++;
+                    }
                 };
             };
 
-            Console.WriteLine($"Patched {interiorCellCount} interior cells");
+            uint worldspacesPatched = 0;
+            // Loop through winning worldspace records (with context) in load order
+            foreach (var winningWorldspaceContext in state.LoadOrder.PriorityOrder.Worldspace().WinningContextOverrides())
+            {
+                // See if the worldspace is in the target mods(s). If it is, retrieve the version of the worldspace record from the target mod.
+                if (targetModsLinkCache.TryResolve<IWorldspaceGetter>(winningWorldspaceContext.Record.FormKey, out var targetWorldspaceRecord)) {
+                    // Check if the record has been modified by the target mod(s)
+                    if (!targetWorldspaceRecord.Music.Equals(winningWorldspaceContext.Record.Music))
+                    {
+                        // Add the winning record to the patch
+                        var patchRecord = winningWorldspaceContext.GetOrAddAsOverride(state.PatchMod);
+                        patchRecord.Music.FormKey = targetWorldspaceRecord.Music.FormKey;
+
+                        worldspacesPatched++;
+                    }
+                };
+            };
+
+            Console.WriteLine($"Finished patching {cellsPatched} cellsPatched");
+            Console.WriteLine($"Finished patching {worldspacesPatched} worldspaces");
         }
     }
 }
