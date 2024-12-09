@@ -28,20 +28,34 @@ namespace MusicFixer
                 System.Console.WriteLine("Must at least specify one target mod in order to do anything.");
                 return;
             }
-            
-            var cells = state.LoadOrder.ListedOrder
+
+            var targetMods = state.LoadOrder.ListedOrder
                 .Select(listing => listing.Mod)
                 .NotNull()
-                .Select(x => (x.ModKey, x.Cells))
-                .Where(x => Settings.Value.TargetMods.Contains(x.ModKey))
+                .Where(plugin => Settings.Value.TargetMods.Contains(plugin.ModKey))
                 .ToArray();
 
-            Console.WriteLine(cells);
+            System.Console.WriteLine("Files to map to:");
+            foreach (var modKey in targetMods.Select(x => x.ModKey))
+            {
+                System.Console.WriteLine($"  {modKey}");
+            }
 
-            // foreach (var cell in state.LoadOrder.PriorityOrder.Cell().WinningOverrides())
-            // {
-            //     Console.WriteLine(cell);
-            // };
+            var targetModsLinkCache = targetMods.ToImmutableLinkCache();
+
+            uint interiorCellCount = 0;
+            foreach (var cell in state.LoadOrder.PriorityOrder.Cell().WinningOverrides())
+            {
+                // See if the cell is in the target mods, and retrieve the winning record from them if it is
+                if (targetModsLinkCache.TryResolveContext<ICell, ICellGetter>(cell.FormKey, out var cellContext)) {
+                    interiorCellCount++;
+
+                    var modifiedCell = state.PatchMod.Cells.GetOrAddAsOverride(cell);
+                    Console.WriteLine(cellContext.Record.Music);
+                };
+            };
+
+            Console.WriteLine($"Patched {interiorCellCount} interior cells");
         }
     }
 }
