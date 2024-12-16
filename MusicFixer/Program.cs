@@ -55,7 +55,7 @@ namespace MusicFixer
                     {
                         // Add the winning record to the patch
                         var patchRecord = winningCellContext.GetOrAddAsOverride(state.PatchMod);
-                        patchRecord.Music.FormKey = targetCellRecord.Music.FormKey;
+                        patchRecord.Music.SetTo(targetCellRecord.Music);
 
                         cellsPatched++;
                     }
@@ -73,7 +73,7 @@ namespace MusicFixer
                     {
                         // Add the winning record to the patch
                         var patchRecord = winningWorldspaceContext.GetOrAddAsOverride(state.PatchMod);
-                        patchRecord.Music.FormKey = targetWorldspaceRecord.Music.FormKey;
+                        patchRecord.Music.SetTo(targetWorldspaceRecord.Music);
 
                         worldspacesPatched++;
                     }
